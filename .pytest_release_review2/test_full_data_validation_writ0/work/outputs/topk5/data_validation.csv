@@ -1,0 +1,2 @@
+﻿file,stock_code,status,rows,invalid_dates,duplicate_dates,invalid_numeric_rows,history_rows,eligible_windows,future_rows,message
+000001.SZ.csv,000001.SZ,valid,12,0,0,0,6,2,6,

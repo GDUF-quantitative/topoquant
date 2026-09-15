@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topoquant"
+version = "0.1.0"
+description = "基于持续同调相似性的股票点云实验流水线"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24,<3",
+  "pandas>=2.0,<4",
+  "rich>=13,<14",
+  "ripser>=0.6,<0.7",
+  "topp==0.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+portable = ["pyinstaller>=6.11,<7"]
+
+[project.scripts]
+topoquant = "topoquant.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

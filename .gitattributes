@@ -1,0 +1,7 @@
+# 仓库内统一存 LF，检出到工作区时用系统原生换行符，
+# 避免 Windows 编辑器把整份文件标记为改动。
+* text=auto
+*.png binary
+*.jpg binary
+*.sqlite3 binary
+*.npy binary

@@ -1,0 +1,97 @@
+<mxfile host="Electron" modified="2026-08-02T02:42:49.116Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="-JxroHHeDsK-vpHZwu1n" version="24.2.5" type="device">
+  <diagram name="第 1 页" id="mdW-0Pep98O8Y3M_8N9p">
+    <mxGraphModel dx="1354" dy="757" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.004;entryY=0.685;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-1" target="0jhqvz7dmVWh80fedJ1c-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-1" value="输入当前日，20240628" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.985;exitY=0.685;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-2" target="0jhqvz7dmVWh80fedJ1c-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-2" value="筛选点云切片，往前推480个交易日，一个点云切片有60行数据，有5027支股票至少有4个点云切片" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="80" width="130" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-4" target="0jhqvz7dmVWh80fedJ1c-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-4" value="把所有点云切片切割出来，共39318个点云切片" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.014;entryY=0.656;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-6" target="0jhqvz7dmVWh80fedJ1c-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-6" value="对每一个点云切片进行归一化处理" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-8" target="0jhqvz7dmVWh80fedJ1c-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-8" value="对归一化的点云切片生成点云，挑选money, volume,high,close四列，选择VR复形，保留0,1,2维持续同调结果（不生成持续图）" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="230" width="140" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-10" target="0jhqvz7dmVWh80fedJ1c-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-10" value="点云分成2类，第一类是日期为20240628的，其他是第二类。" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="245" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-12" target="0jhqvz7dmVWh80fedJ1c-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-12" value="将每一个第一类点云都与全部第二类点云都进行Bottleneck距离计算，算0维和1维的" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="385" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-14" target="0jhqvz7dmVWh80fedJ1c-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-14" value="设定距离阈值r=0.1，若一个第二类点云与当前第一类点云的两个距离都小于r，则记录" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="245" y="382.5" width="140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-16" target="0jhqvz7dmVWh80fedJ1c-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-16" value="若第二类点云达到了N个或以上，则把1维距离最小的前N个点云记录下来，输出所有被记录的第一类点云" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="380" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-18" target="0jhqvz7dmVWh80fedJ1c-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-18" value="第一次实验，100个第一类点云选出11个，第二次，4977个选出530个。" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="525" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-20" target="0jhqvz7dmVWh80fedJ1c-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-20" value="选择N=5，把530个点云切片及其top5相似点云切片的后5天交易数据调取出来生成csv" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="260" y="525" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-22" target="0jhqvz7dmVWh80fedJ1c-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-22" value="计算每个点云每天（共5天）的收盘价差d_k=c_k-c_0, 并新增涨跌列，用1表示涨，0表示跌" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="517.5" width="120" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-24" target="0jhqvz7dmVWh80fedJ1c-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-24" value="新增一列预测值，若5个第二类点云的第k天的涨跌列数据中有3个或以上的1，则判断目标点云也是涨，否则是跌。填到预测值列里。" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="680" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0jhqvz7dmVWh80fedJ1c-26" target="0jhqvz7dmVWh80fedJ1c-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-26" value="新增一列预测结果，将预测值列与目标点云的第k行比对，若结果相同则记为1，否则记为0.&amp;nbsp;" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="680" width="125" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="0jhqvz7dmVWh80fedJ1c-28" value="把5个交易日每日的530个预测结果统计起来。得到准确率。" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="465" y="690" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

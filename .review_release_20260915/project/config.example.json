@@ -1,0 +1,19 @@
+{
+  "source_dir": "./data/stock",
+  "work_root": "./runs",
+  "as_of_date": "2024-06-28",
+  "window_size": 60,
+  "lookback_trading_days": 480,
+  "min_windows": 4,
+  "features": ["money", "volume", "high", "close"],
+  "data_quality_mode": "permissive",
+  "max_edge_length": 3.0,
+  "distance_dimensions": [0, 1],
+  "distance_threshold_h0": 0.1,
+  "distance_threshold_h1": 0.1,
+  "top_k": 5,
+  "forecast_horizon": 5,
+  "topology_workers": 0,
+  "matching_workers": 0,
+  "forecast_workers": 0
+}
