@@ -196,6 +196,7 @@ class PipelineConfig:
         fields = {
             "matching": self.matching_signature(),
             "forecast_horizon": self.forecast_horizon,
+            "return_metric": "signed-log-return-v1",
         }
         payload = json.dumps(fields, sort_keys=True).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()

@@ -14,6 +14,7 @@ from topoquant.config import PipelineConfig
 from topoquant.data import iter_cloud_windows, load_future_directions, standardized_points
 from topoquant.pipeline import _exact_bottleneck, match_clouds, run_all
 from topoquant.preflight import inspect_environment, inspect_results
+from topoquant.storage import connect
 from topoquant.topology import bottleneck_distance, compute_persistence, finite_bottleneck_distance
 from topoquant.validation import validate_dataset
 
@@ -69,10 +70,13 @@ def test_standardization_matches_population_zscore(tmp_path: Path) -> None:
 def test_future_direction_uses_first_prev_close_as_baseline(tmp_path: Path) -> None:
     path = tmp_path / "000001.SZ.csv"
     make_stock(path, rows=8)
-    dates, differences, directions = load_future_directions(path, date(2024, 1, 4), 3)
+    dates, differences, directions, log_returns = load_future_directions(
+        path, date(2024, 1, 4), 3
+    )
     assert dates == [date(2024, 1, 5), date(2024, 1, 8), date(2024, 1, 9)]
     np.testing.assert_allclose(differences, [0.5, 1.5, 2.5])
     np.testing.assert_array_equal(directions, [1, 1, 1])
+    np.testing.assert_allclose(log_returns, np.log(np.array([14.0, 15.0, 16.0]) / 13.5))
 
 
 def test_automatic_worker_counts_follow_cpu_count(monkeypatch, tmp_path: Path) -> None:
@@ -134,6 +138,39 @@ def test_full_data_validation_writes_audit(tmp_path: Path) -> None:
     assert result == {"total": 1, "valid": 1, "excluded": 0, "error": 0, "workers": 1}
     assert events == [(0, 1), (1, 1)]
     assert (config.output_dir / "data_validation.csv").is_file()
+
+
+def test_schema_v1_adds_log_return_column_without_dropping_database(tmp_path: Path) -> None:
+    database = tmp_path / "artifacts.sqlite3"
+    with sqlite3.connect(database) as db:
+        db.executescript(
+            """
+            CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            INSERT INTO metadata(key, value) VALUES ('schema_version', '1');
+            CREATE TABLE forecasts (
+                target_id TEXT NOT NULL,
+                horizon INTEGER NOT NULL,
+                target_date TEXT NOT NULL,
+                actual_difference REAL NOT NULL,
+                actual_direction INTEGER NOT NULL,
+                predicted_direction INTEGER NOT NULL,
+                vote_up INTEGER NOT NULL,
+                vote_count INTEGER NOT NULL,
+                correct INTEGER NOT NULL,
+                PRIMARY KEY (target_id, horizon)
+            );
+            """
+        )
+
+    with connect(database) as db:
+        columns = {
+            str(row["name"])
+            for row in db.execute("PRAGMA table_info(forecasts)").fetchall()
+        }
+        assert "actual_log_return" in columns
+        assert db.execute(
+            "SELECT value FROM metadata WHERE key='schema_version'"
+        ).fetchone()[0] == "2"
 
 
 def test_small_pipeline_reaches_report(tmp_path: Path) -> None:
@@ -202,8 +239,25 @@ def test_small_pipeline_reaches_report(tmp_path: Path) -> None:
     assert result["matching"]["workers"] == 2
     assert result["forecast"] == {"selected": 3, "complete": 3, "error": 0, "workers": 2}
     assert result["report"]["predictions"] == 9
-    metrics = (config.output_dir / "metrics.json").read_text(encoding="utf-8")
-    assert '"target_count": 3' in metrics
+    metrics = json.loads((config.output_dir / "metrics.json").read_text(encoding="utf-8"))
+    assert metrics["target_count"] == 3
+    assert isinstance(metrics["overall"]["log_return"], float)
+    assert all("log_return" in item for item in metrics["by_horizon"].values())
+    predictions_header = (config.output_dir / "predictions.csv").read_text(
+        encoding="utf-8-sig"
+    ).splitlines()[0]
+    assert "actual_log_return" in predictions_header
+    assert "strategy_log_return" in predictions_header
+    predictions = pd.read_csv(config.output_dir / "predictions.csv")
+    expected_strategy_returns = predictions["actual_log_return"] * np.where(
+        predictions["predicted_direction"] == 1, 1.0, -1.0
+    )
+    np.testing.assert_allclose(
+        predictions["strategy_log_return"], expected_strategy_returns
+    )
+    assert metrics["overall"]["log_return"] == pytest.approx(
+        float(expected_strategy_returns.mean())
+    )
     for stage in ("topology", "matching", "forecast"):
         stage_events = [event for event in events if event[0] == stage]
         assert stage_events[0][1] == 0

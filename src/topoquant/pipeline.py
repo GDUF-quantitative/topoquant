@@ -1330,7 +1330,7 @@ def forecast(
                 if len(similar_ids) != config.top_k:
                     raise DataError(f"匹配数为 {len(similar_ids)}，期望 {config.top_k}")
                 target_record = records[target_id]
-                target_dates, target_diffs, target_directions = future(
+                target_dates, target_diffs, target_directions, target_log_returns = future(
                     target_record.source_path, target_record.cloud_date
                 )
                 analog_directions = np.vstack([
@@ -1347,6 +1347,7 @@ def forecast(
                         horizon + 1,
                         target_dates[horizon].isoformat(),
                         float(target_diffs[horizon]),
+                        float(target_log_returns[horizon]),
                         actual,
                         predicted,
                         int(vote_up[horizon]),

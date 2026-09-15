@@ -14,7 +14,7 @@ from .domain import CloudRecord, Diagram
 
 LOGGER = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 
 
 class StorageError(RuntimeError):
@@ -82,6 +82,7 @@ def create_schema(db: sqlite3.Connection) -> None:
             horizon INTEGER NOT NULL,
             target_date TEXT NOT NULL,
             actual_difference REAL NOT NULL,
+            actual_log_return REAL NOT NULL,
             actual_direction INTEGER NOT NULL,
             predicted_direction INTEGER NOT NULL,
             vote_up INTEGER NOT NULL,
@@ -92,8 +93,14 @@ def create_schema(db: sqlite3.Connection) -> None:
         """
     )
     existing = get_metadata(db, "schema_version")
-    if existing is not None and existing != SCHEMA_VERSION:
+    if existing not in (None, "1", SCHEMA_VERSION):
         raise StorageError(f"实验库版本为 {existing}，当前程序需要 {SCHEMA_VERSION}")
+    forecast_columns = {
+        str(row["name"])
+        for row in db.execute("PRAGMA table_info(forecasts)").fetchall()
+    }
+    if "actual_log_return" not in forecast_columns:
+        db.execute("ALTER TABLE forecasts ADD COLUMN actual_log_return REAL")
     set_metadata(db, "schema_version", SCHEMA_VERSION)
     db.commit()
 
@@ -279,9 +286,10 @@ def save_forecasts(db: sqlite3.Connection, target_id: str, rows: list[tuple[obje
     db.executemany(
         """
         INSERT INTO forecasts(
-            target_id, horizon, target_date, actual_difference, actual_direction,
+            target_id, horizon, target_date, actual_difference, actual_log_return,
+            actual_direction,
             predicted_direction, vote_up, vote_count, correct
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [(target_id, *row) for row in rows],
     )

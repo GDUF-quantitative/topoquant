@@ -114,7 +114,11 @@ def standardized_points(window: CloudWindow, features: Sequence[str]) -> np.ndar
     return (values - mean) / scale
 
 
-def load_future_directions(path: Path, cloud_date: date, horizon: int) -> tuple[list[date], np.ndarray, np.ndarray]:
+def load_future_directions(
+    path: Path,
+    cloud_date: date,
+    horizon: int,
+) -> tuple[list[date], np.ndarray, np.ndarray, np.ndarray]:
     try:
         frame = read_csv_flexibly(path, usecols=["EventDate", "prev_close", "close"])
     except ValueError as exc:
@@ -131,8 +135,12 @@ def load_future_directions(path: Path, cloud_date: date, horizon: int) -> tuple[
     if len(frame) != horizon:
         raise DataError(f"{path.name} 在 {cloud_date} 后只有 {len(frame)} 个有效交易日，需要 {horizon} 个")
     baseline = float(frame.iloc[0]["prev_close"])
-    differences = frame["close"].to_numpy(dtype=np.float64) - baseline
+    closes = frame["close"].to_numpy(dtype=np.float64)
+    if baseline <= 0.0 or np.any(closes <= 0.0):
+        raise DataError(f"{path.name} 在 {cloud_date} 后存在非正价格，无法计算对数收益率")
+    differences = closes - baseline
     directions = (differences >= 0.0).astype(np.int8)
+    log_returns = np.log(closes / baseline)
     dates = [item.date() for item in frame["EventDate"]]
-    return dates, differences, directions
+    return dates, differences, directions, log_returns
 

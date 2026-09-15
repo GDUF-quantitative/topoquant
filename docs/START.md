@@ -2,7 +2,7 @@
 
 ## 1. 安装
 
-需要 Windows 10/11 和 64 位 Python 3.10–3.12，推荐 Python 3.11。
+需要 Windows 10/11 和 64 位 Python 3.10–3.14，推荐 Python 3.11；其他版本仍取决于 Ripser/Topp 是否提供对应 wheel。
 
 在项目根目录运行：
 
@@ -72,8 +72,15 @@ Copy-Item .\config.example.json .\config.20240628.json
 
 - `artifacts.sqlite3`：持续同调、匹配和预测实验库；
 - `outputs\selected_matches.csv`：相似点云；
-- `outputs\predictions.csv`：预测明细；
-- `outputs\metrics.json`：准确率；
+- `outputs\predictions.csv`：预测明细及实际/策略对数收益率；
+- `outputs\metrics.json`：总体和逐预测日的准确率、平均策略对数收益率；
 - `outputs\report.txt`：文本报告。
+
+旧实验库升级后无需重算持续同调和匹配；重新执行 `forecast`、`report` 即可补齐对数收益率：
+
+```powershell
+.venv\Scripts\python -m topoquant --config .\config.20240628.json forecast
+.venv\Scripts\python -m topoquant --config .\config.20240628.json report
+```
 
 安装或离线部署问题见 [SETUP.md](SETUP.md)。

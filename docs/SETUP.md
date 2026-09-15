@@ -117,3 +117,14 @@ python -m pip download -d wheelhouse `
 - 预测失败：确认原始 CSV 包含截止日之后至少 `forecast_horizon` 个交易日，而不只是截至截止日的数据。
 
 安装完成的最低验收是：CLI 帮助可显示、`preflight` 无红色错误、`validate-data` 的 `error=0`。这三项通过后再启动完整计算。
+
+## 8. 可选的 MLflow 实验记录
+
+MLflow 不属于核心运行依赖，只在需要上传实验参数和指标时安装。项目使用 uv 环境时执行：
+
+```powershell
+uv pip install --python .\.venv\Scripts\python.exe "mlflow==3.16.0"
+.\.venv\Scripts\python.exe .\uplooad_mlflow.py
+```
+
+上传脚本只写入实验参数、准确率和平均策略对数收益率，不上传源码、配置或输出文件。旧实验结果需先重新执行 `forecast` 和 `report` 生成带 `log_return` 的 `metrics.json`。本地脚本已被 Git 忽略，其中的连接设置不得提交或作为 artifact 上传。

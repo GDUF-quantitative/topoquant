@@ -16,8 +16,8 @@
 | `money` | 有限数值 | 点云第 1 维 | 同一股票跨日期保持一致口径 |
 | `volume` | 有限数值 | 点云第 2 维 | 同一股票跨日期保持一致口径 |
 | `high` | 有限数值 | 点云第 3 维 | 与 close 使用相同复权口径 |
-| `close` | 有限数值 | 点云第 4 维、实际涨跌 | 与 prev_close 使用相同复权口径 |
-| `prev_close` | 有限数值 | 未来累计涨跌基准 | 必须对应该交易日的前收盘价 |
+| `close` | 有限数值 | 点云第 4 维、实际涨跌和对数收益率 | 与 prev_close 使用相同复权口径，预测期必须大于 0 |
+| `prev_close` | 有限数值 | 未来累计涨跌和对数收益率基准 | 必须对应该交易日的前收盘价，预测期必须大于 0 |
 
 允许存在其他列，程序不会依赖列的位置。列名区分大小写，不再接受 notebook 中“C 到 L 列”这种位置契约。
 
@@ -35,6 +35,7 @@
 ## 数值口径
 
 - `high`、`close`、`prev_close` 必须统一使用前复权、后复权或不复权中的一种，不能在时间中途切换。
+- 对数收益率以首个未来交易日的 `prev_close` 为基准，按 `ln(close / prev_close)` 计算；预测上涨按做多、预测下跌按做空取相反数，汇总指标为所有预测的等权平均。
 - `money` 和 `volume` 的绝对单位可以因数据源不同而不同，因为每个窗口会单独 Z-score；但同一文件内不能改变单位。
 - 不接受 `NaN`、空字符串、`inf` 或无法转为数值的必需字段。快速预检只检查表头；`validate-data` 会完整扫描这些问题。
 - 若供应商数据包含重复交易日，应先明确合并规则，不能让程序任意保留一行。
@@ -56,6 +57,6 @@ EventDate,money,volume,high,close,prev_close
 - `runs/<实验>/artifacts.sqlite3`：持续同调、匹配和预测的可恢复实验库。
 - `runs/<实验>/outputs/data_validation.*`：完整数据验证结果。
 - `runs/<实验>/outputs/selected_matches.csv`：Top-N 匹配。
-- `runs/<实验>/outputs/predictions.csv`、`metrics.json`、`report.txt`：预测与评估。
+- `runs/<实验>/outputs/predictions.csv`、`metrics.json`、`report.txt`：预测、准确率和策略对数收益率评估。
 
 不同截止日、点云参数或原始数据版本应使用不同 `work_dir`。程序通过配置和输入文件指纹阻止不同实验混用，但原始数据的来源、下载日期和复权口径仍应由数据提供者另行记录。

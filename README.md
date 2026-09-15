@@ -16,7 +16,7 @@
 4. `cloud_date == as_of_date` 是目标点云，`cloud_date < as_of_date` 才是历史候选（不使用未来数据）。对 H0、H1 分别计算瓶颈距离，两个距离都严格小于阈值才合格。
 5. 合格历史点云数量不少于 `top_k` 时，按 H1 距离、H0 距离、点云 ID 稳定排序并保留前 `top_k`。
 6. 对目标及相似点云分别读取其窗口日期之后的 5 个交易日，以首个未来交易日的 `prev_close` 为基准计算累计涨跌；相似点云多数投票生成预测，并与目标真实方向比较。
-7. 从实验库导出匹配表、逐日预测、机器可读指标和文本报告。
+7. 将预测上涨视为做多、预测下跌视为做空，计算每个预测的策略对数收益率，再从实验库导出匹配表、逐日预测、机器可读指标和文本报告。
 
 ## 中间产物
 
@@ -25,7 +25,7 @@
 - `clouds`：点云 ID、日期、股票代码、来源和处理状态；
 - `diagrams`：H0/H1/H2 的 birth-death 数值对，以紧凑的 `float64` 二进制保存；
 - `match_runs` / `matches`：候选数、阈值内数量、Top-N 及两个距离；
-- `forecast_runs` / `forecasts`：未来日期、价差、实际方向、投票和预测正确性；
+- `forecast_runs` / `forecasts`：未来日期、价差、实际对数收益率、方向、投票和预测正确性；
 - `metadata`：配置、输入文件指纹和阶段签名，防止把不同实验混进同一目录。
 
 匹配阶段还会在 `<work_dir>/mmap/` 下派生一份只读的持续同调镜像（`diagrams_h0.npy`、`diagrams_h1.npy`、`diagram_counts.npy`、`diagram_index.json`、`diagram_signature.txt`），由 SQLite 原子导出，供多进程以 `mmap` 零拷贝共享。这些文件可随时删除，下次运行会按签名自动重建，因此不纳入版本控制。
@@ -33,15 +33,15 @@
 最终结果位于 `<work_dir>/outputs/`：
 
 - `selected_matches.csv`
-- `predictions.csv`
-- `metrics.json`
-- `report.txt`
+- `predictions.csv`：逐目标、逐预测日的方向判断，以及实际/策略对数收益率；
+- `metrics.json`：总体和逐预测日的准确率、平均策略对数收益率；
+- `report.txt`：便于直接阅读的同口径摘要。
 
 原始 CSV 是唯一外部输入；窗口 CSV、归一化 CSV、持续同调 TXT 和持续同调图都不再保存。SQLite 是 Python 自带组件，避免为单一列式格式引入 PyArrow/HDF5 等较重依赖，同时保留随机读取、事务、断点续算和审计能力。
 
 ## 安装与运行
 
-建议 Python 3.10–3.12。复制并修改 `config.example.json`，然后在项目目录执行：
+当前支持 Python 3.10–3.14；Windows 上推荐 64 位 Python 3.11，其他版本仍取决于 Ripser/Topp 是否提供对应 wheel。复制并修改 `config.example.json`，然后在项目目录执行：
 
 ```powershell
 py -m venv .venv
@@ -125,11 +125,25 @@ py -m venv .venv
 - 行情文件名推荐为 `000001.SZ.csv` 或 `000001SZ.csv`。
 - 点云计算至少需要 `EventDate, money, volume, high, close`。
 - 预测还需要 `prev_close`；每个目标和相似点云在其日期之后必须恰好取得至少 5 个有效、无重复的交易日。
+- 用于预测期收益计算的 `prev_close` 和 `close` 必须为正数。单条策略对数收益率定义为 `(2 × predicted_direction - 1) × ln(close / baseline)`，其中 `baseline` 是首个未来交易日的 `prev_close`；汇总指标取等权平均。
 - 若 H0 或 H1 任一持续图为空，其瓶颈距离按无穷大处理，与原 notebook 的筛选行为一致。
 - 本质类（`death=+inf`）继续按既有语义精确处理：有限部分交给 Topp，本质类个数不同判为 `+inf`，个数相同时按 birth 降序逐位配对。
 - 距离语义已写入 `matching_signature`，Giotto 版本产生的匹配缓存不会被静默复用。
 - Pivot 只用于严格下界筛选，最终距离仍由 Topp 精确计算；单元测试会对拍启用/禁用 pivot 的最终匹配结果。
 - 多数投票的门槛是 `floor(top_k / 2) + 1`；建议使用奇数 `top_k`。
+
+## MLflow 实验记录
+
+MLflow 是可选的实验跟踪层，不参与计算。当前方法在 MLflow 参数中记为 `topological_knn_majority_vote`：先按 H0/H1 瓶颈距离筛选和排序拓扑近邻，再对 Top-K 近邻多数投票。上传脚本只记录参数与指标，不上传源码、配置文件或输出文件。
+
+项目环境若尚未安装 MLflow，可使用 uv 安装并运行本地脚本：
+
+```powershell
+uv pip install --python .\.venv\Scripts\python.exe "mlflow==3.16.0"
+.\.venv\Scripts\python.exe .\uplooad_mlflow.py
+```
+
+上传前必须先用当前版本重新执行 `forecast` 和 `report`，确保 `metrics.json` 已包含总体及 d1–dN 的 `accuracy` 与 `log_return`。`uplooad_mlflow.py` 含本地连接设置且已被 Git 忽略；不要把凭据写入文档、提交到版本库或作为 MLflow artifact 上传。
 
 ## 测试
 
