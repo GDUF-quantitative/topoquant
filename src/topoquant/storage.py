@@ -21,6 +21,10 @@ class StorageError(RuntimeError):
     """实验库状态与当前运行不兼容。"""
 
 
+class ExperimentIdentityError(StorageError):
+    """已有实验数据与当前拓扑配置或行情输入不兼容。"""
+
+
 def connect(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
@@ -137,12 +141,16 @@ def check_or_set_identity(
     diagram_count = db.execute("SELECT COUNT(*) FROM diagrams").fetchone()[0]
     if diagram_count and stored_topology != topology_signature:
         if not force:
-            raise StorageError("当前配置会改变点云或持续同调结果；请使用新的 work_dir")
+            raise ExperimentIdentityError(
+                "当前配置会改变点云或持续同调结果；请使用新的 work_dir"
+            )
         clear_experiment_data(db)
         LOGGER.warning("配置变更且已授权 --force-rebuild，已清空旧实验数据")
     if diagram_count and stored_source != source_signature:
         if not force:
-            raise StorageError("原始行情文件已变化；为避免混合实验，请使用新的 work_dir")
+            raise ExperimentIdentityError(
+                "原始行情文件已变化；为避免混合实验，请使用新的 work_dir"
+            )
         clear_experiment_data(db)
         LOGGER.warning("行情文件变更且已授权 --force-rebuild，已清空旧实验数据")
     set_metadata(db, "topology_signature", topology_signature)

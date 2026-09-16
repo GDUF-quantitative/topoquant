@@ -14,7 +14,7 @@ from topoquant.config import PipelineConfig
 from topoquant.data import iter_cloud_windows, load_future_directions, standardized_points
 from topoquant.pipeline import _exact_bottleneck, match_clouds, run_all
 from topoquant.preflight import inspect_environment, inspect_results
-from topoquant.storage import connect
+from topoquant.storage import ExperimentIdentityError, check_or_set_identity, connect
 from topoquant.topology import bottleneck_distance, compute_persistence, finite_bottleneck_distance
 from topoquant.validation import validate_dataset
 
@@ -32,6 +32,23 @@ def make_stock(path: Path, rows: int = 12) -> None:
             "prev_close": values - 0.5,
         }
     ).to_csv(path, index=False)
+
+
+def test_identity_mismatch_has_specific_error(tmp_path: Path) -> None:
+    with connect(tmp_path / "work" / "artifacts.sqlite3") as db:
+        check_or_set_identity(db, "topology-old", "source", {})
+        db.execute(
+            "INSERT INTO clouds VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("cloud", "2024-01-01", "000001.SZ", "stock.csv", 3, "complete", None),
+        )
+        db.execute(
+            "INSERT INTO diagrams VALUES (?, ?, ?, ?)",
+            ("cloud", 0, 0, b""),
+        )
+        db.commit()
+
+        with pytest.raises(ExperimentIdentityError, match="新的 work_dir"):
+            check_or_set_identity(db, "topology-new", "source", {})
 
 
 def test_windows_are_non_overlapping_and_newest_first(tmp_path: Path) -> None:

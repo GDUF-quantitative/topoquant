@@ -54,6 +54,7 @@ if (
 # ── 继续正常的导入 ───────────────────────────────────
 
 import json
+import re
 from datetime import date, datetime
 from typing import Any
 import subprocess
@@ -150,6 +151,43 @@ def load_defaults() -> dict[str, Any]:
         except (json.JSONDecodeError, OSError):
             pass
     return dict(DEFAULTS)
+
+
+def next_incremental_work_dir(work_dir: str, base_dir: Path) -> str:
+    """创建同级递增工作目录，并保持配置中的相对/绝对路径形式。"""
+    configured = Path(work_dir).expanduser()
+    resolved = configured if configured.is_absolute() else base_dir / configured
+    resolved = resolved.resolve()
+
+    # 自动生成过的 ``name_2`` 再次冲突时继续生成 ``name_3``，而不是
+    # ``name_2_2``。只有原始目录确实存在时才把末尾数字视为自动编号，
+    # 避免误改用户原本就带下划线数字的目录名。
+    match = re.fullmatch(r"(.+)_([2-9]\d*)", resolved.name)
+    if match and (resolved.parent / match.group(1)).exists():
+        base_name = match.group(1)
+    else:
+        base_name = resolved.name
+
+    pattern = re.compile(rf"{re.escape(base_name)}_(\d+)")
+    indices = [1]
+    if resolved.parent.is_dir():
+        for sibling in resolved.parent.iterdir():
+            sibling_match = pattern.fullmatch(sibling.name)
+            if sibling_match:
+                indices.append(int(sibling_match.group(1)))
+
+    index = max(indices) + 1
+    while True:
+        candidate = resolved.parent / f"{base_name}_{index}"
+        try:
+            candidate.mkdir(parents=True, exist_ok=False)
+            break
+        except FileExistsError:
+            index += 1
+
+    if configured.is_absolute():
+        return str(candidate)
+    return str(configured.parent / candidate.name)
 
 
 # ── 交互式输入 ────────────────────────────────────────
@@ -249,7 +287,7 @@ def collect_params(defaults: dict[str, Any]) -> dict[str, Any]:
     params["work_dir"] = prompt_str(
         "实验结果目录",
         defaults.get("work_dir", f"./runs/{params['as_of_date']}"),
-        "同一天更改实验协议时请使用新目录",
+        "协议或行情变化时自动创建递增目录",
     )
 
     # ── 第2组：窗口参数 ──
@@ -532,6 +570,7 @@ def main() -> None:
                 from topoquant.cli import render_status                  # noqa: E402
             elif _mod == "topoquant.pipeline":
                 from topoquant.pipeline import run_all                   # noqa: E402
+                from topoquant.storage import ExperimentIdentityError    # noqa: E402
             elif _mod == "topoquant.preflight":
                 from topoquant.preflight import inspect_environment      # noqa: E402
                 from topoquant.preflight import ensure_ready             # noqa: E402
@@ -650,6 +689,30 @@ def main() -> None:
                 reset=bool(params.get("reset", False)),
                 force_rebuild=bool(params.get("force_rebuild", False)),
             )
+        except ExperimentIdentityError as exc:
+            try:
+                old_work_dir = config.work_dir
+                params["work_dir"] = next_incremental_work_dir(
+                    str(params["work_dir"]), _PROJECT_ROOT
+                )
+                persisted["work_dir"] = params["work_dir"]
+                config_path.write_text(
+                    json.dumps(persisted, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
+                config = PipelineConfig.from_json(config_path)
+                console.print(
+                    Panel(
+                        f"{exc}\n\n"
+                        f"已保留旧实验：{old_work_dir}\n"
+                        f"本次自动切换到：{config.work_dir}",
+                        title="自动创建增量实验目录",
+                        border_style="yellow",
+                    )
+                )
+                result = run_all(config, on_progress)
+            except Exception as retry_exc:
+                console.print(Panel(str(retry_exc), title="运行失败", border_style="red"))
+                sys.exit(2)
         except Exception as e:
             console.print(Panel(str(e), title="运行失败", border_style="red"))
             sys.exit(2)

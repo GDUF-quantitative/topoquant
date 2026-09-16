@@ -127,4 +127,4 @@ uv pip install --python .\.venv\Scripts\python.exe "mlflow==3.16.0"
 .\.venv\Scripts\python.exe .\uplooad_mlflow.py
 ```
 
-上传脚本只写入实验参数、准确率和平均策略对数收益率，不上传源码、配置或输出文件。旧实验结果需先重新执行 `forecast` 和 `report` 生成带 `log_return` 的 `metrics.json`。本地脚本已被 Git 忽略，其中的连接设置不得提交或作为 artifact 上传。
+上传脚本写入实验参数、准确率和平均策略对数收益率，同时上传 `config.json` 与 `outputs/` 结果；源码不再上传。旧实验结果需先重新执行 `forecast` 和 `report` 生成带 `log_return` 的 `metrics.json`。本地脚本已被 Git 忽略，其中的连接设置不得提交或作为 artifact 上传。
